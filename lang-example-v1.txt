@@ -1,0 +1,26 @@
+fn fn1() int {
+	int x = 5
+	return x
+}
+
+fn main() void {
+	for(int k; k < 5; k++) {
+		if (k % 2 == 0 and k == 0) {
+			i++
+		} else if (k % 3 == 0 or k == 0) {
+			i+=2
+		} else if(not booleanFlag) {
+			j++
+		}
+	}
+
+	for(int i : 0...argc) {
+		
+	}
+
+	if(int a = 0; a == 1) {
+
+	} elif(uint b = 0; b == 0) {
+	} else {
+	}
+}

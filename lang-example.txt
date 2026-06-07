@@ -1,0 +1,85 @@
+include (
+	"stdio.h"
+	"stdlib.h"
+	"fcntl.h"
+)
+
+extern (
+	type FILE
+	fn fopen(char*, char*) FILE*
+)
+
+const (
+	float pi = 3.14
+)
+
+alias (
+	type a = float
+	type ld = type(lambda)
+)
+
+fn fn1() int {
+	let x = 5
+	return x
+}
+
+fn fn2(const char*! ptr) void {}
+
+struct Data {
+	int x; uint y
+}
+
+interface User {
+	pub fn someFn() void
+}
+
+class ConcreteUser impl User {
+	pub fn someFn() void {}
+	pub int age
+}
+
+class AbstractUser impl User {
+	pub fn someFn() void {}
+}
+
+fn main() {
+	let lambda => [](i32 x) i32 {
+		return x 
+	}
+
+	defer lambda(x)
+
+	Data data = { x: 60, y: 50 }
+	Concrete cUser
+	let user = dyn_cast<User>(cUser)
+	user.someFn()
+
+	for(int k = 0; k < 5; k++) {
+		if (k % 2 == 0 and k == 0) {
+			i++
+		} else if (k % 3 == 0 or k == 0) {
+			i+=2
+		} else if(not booleanFlag) {
+			j++
+		}
+	}
+
+	for(int i : 0...argc) {
+		
+	}
+
+	if(int a = 0; a == 1) {
+
+	}
+
+	match (i) {
+	    	0 => {}
+		1...10 => {}
+		10...50 => {}
+		_ => {}
+	}
+
+	match (user) {
+		ConcreteUser => {}
+	}
+}
