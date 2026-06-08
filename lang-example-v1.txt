@@ -4,23 +4,26 @@ fn fn1() int {
 }
 
 fn main() void {
+	int[6] a
+
 	for(int k; k < 5; k++) {
-		if (k % 2 == 0 and k == 0) {
+		if (k % 2 == 0 or b == 1) {
 			i++
-		} else if (k % 3 == 0 or k == 0) {
+		} else if (k % 3 == 0 and k == 1) {
 			i+=2
-		} else if(not booleanFlag) {
+		} else if (not boolean) {
 			j++
 		}
 	}
 
-	for(int i : 0...argc) {
+	for(int i : 0..argc) {
 		
 	}
 
 	if(int a = 0; a == 1) {
 
-	} elif(uint b = 0; b == 0) {
+	} elif(int b = 0; b == 0) {
+
 	} else {
 	}
 }
