@@ -5,7 +5,7 @@ cmpMerge = "and" | "or"
 
 assignOp = "=" | "+=" | "-=" | "*=" | "/="
 unaryOp = "++" | "--"
-modifier = "&" | "*" | "[" expr? "]"
+modifier = "&" | "*" | "[" ?expr "]"
 
 expr = literalExpr | ident | callExpr | unaryExpr | binaryExpr | groupedExpr
 
@@ -25,8 +25,9 @@ groupedBoolExpr = "(" boolExpr ")"
 
 stmt = varInit | varDecl | varAssign | returnStmt | ifStmt | forLoop | forRange | expr | block
 
-varDecl = type ?modifier ident
-varInit = varDecl "=" expr
+varType = ?"const" type ?modifier
+varDecl varType ident
+varInit = varType ident "=" expr
 varAssign = ident assignOp expr
 returnStmt = "return" ?expr
 fnDecl = "fn" ident "(" ?varDecl "," ... ?varDecl ")" type block
