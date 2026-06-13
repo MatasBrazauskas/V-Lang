@@ -2,27 +2,61 @@
 
 #include "Lexer.hpp"
 
-BinaryExpr::BinaryExpr(std::unique_ptr<Expr> t_lhs, std::unique_ptr<Expr> t_rhs, const char t_op):
-left{std::move(t_lhs)}, right{std::move(t_rhs)}, op{t_op} {}
+LiteralExpr::LiteralExpr(const std::string& t_literalType, const std::string& t_literalValue)
+    : literalType{t_literalType}, literalValue{t_literalValue} {}
 
-LiteralExpr::LiteralExpr(): literalValue{"0"} {}
+IdentExpr::IdentExpr(const std::string& t_identName): identName{t_identName} {}
 
-LiteralExpr::LiteralExpr(const std::string& t_literalValue): literalValue{t_literalValue} {}
-
-FnCallExpr::FnCallExpr(const std::string& t_functionName, std::vector<std::unique_ptr<Expr>> t_args)
+CallExpr::CallExpr(const std::string& t_functionName, std::vector<std::unique_ptr<Expr>> t_args)
     : functionName{t_functionName}, args{std::move(t_args)} {}
+
+BinaryExpr::BinaryExpr(std::unique_ptr<Expr> t_lhs, std::unique_ptr<Expr> t_rhs, const std::string& t_operand):
+leftExpr{std::move(t_lhs)}, rightExpr{std::move(t_rhs)}, operand{t_operand} {}
+
+
+
+ComparisonExpr::ComparisonExpr(std::unique_ptr<Expr> t_left, std::unique_ptr<Expr> t_right, const std::string& t_operand)
+    : leftExpr{std::move(t_left)}, rightExpr{std::move(t_right)}, operand{t_operand} {}
+
+LogicalExpr::LogicalExpr(std::unique_ptr<BoolExpr> t_left, std::unique_ptr<BoolExpr> t_right, const std::string& t_operand)
+    : leftBoolExpr{std::move(t_left)}, rightBoolExpr{std::move(t_right)}, operand{t_operand} {}
+
+NotExpr::NotExpr(std::unique_ptr<BoolExpr> t_boolExpr): boolExpr{std::move(t_boolExpr)} {}
+
+
+
+VarDeclStmt::VarDeclStmt(bool t_isCond, const std::string& t_typeName, const std::string& t_identName)
+    :isConst{t_isCond}, typeName{t_typeName}, identName{t_identName} {}
+
+VarInitStmt::VarInitStmt(std::unique_ptr<Stmt> t_varDecl, std::unique_ptr<Expr> t_initializer)
+    : varDecl{std::move(t_varDecl)}, initializer{std::move(t_initializer)} {}
+
+VarAssignStmt::VarAssignStmt(const std::string& t_name, std::unique_ptr<Expr> t_assignment)
+    : name{t_name}, assignment{std::move(t_assignment)} {}
 
 ReturnStmt::ReturnStmt(std::unique_ptr<Expr> t_returnExpr): returnExpr{std::move(t_returnExpr)} {}
 
-FnCallStmt::FnCallStmt(std::unique_ptr<Expr> t_fnCallExpr): fnCallExpr(std::move(t_fnCallExpr)) {};
+BlockStmt::BlockStmt(std::vector<std::unique_ptr<Stmt>> t_stmts): statements{std::move(t_stmts)} {}
 
-VarInitializerStmt::VarInitializerStmt(const std::string& t_typeName, const std::string& t_name, std::unique_ptr<Expr> t_initializer)
-    : typeName{t_typeName}, name{t_name}, initializer{std::move(t_initializer)} {}
+FnDeclStmt::FnDeclStmt(const std::string& t_fnName, std::vector<std::unique_ptr<VarDeclStmt>> t_parameters, const std::string& t_returnType, std::unique_ptr<BlockStmt> t_body)
+    : functionName{t_fnName}, parameters{std::move(t_parameters)}, returnType{t_returnType}, body{std::move(t_body)} {}
 
-VarAssignStmt::VarAssignStmt(const std::string& t_name, std::unique_ptr<Expr> t_initializer)
-    : name{t_name}, initializer{std::move(t_initializer)} {}
+IfStmt::IfStmt(std::unique_ptr<VarInitStmt> t_init, std::unique_ptr<BoolExpr> t_cond, std::unique_ptr<BlockStmt> t_body)
+    : initializer{std::move(t_init)}, condition{std::move(t_cond)}, body{std::move(t_body)} {}
+
+CondStmt::CondStmt(std::unique_ptr<IfStmt> ifs, std::vector<std::unique_ptr<IfStmt>> elses, std::unique_ptr<BlockStmt> blk)
+    : ifCond{std::move(ifs)}, elsesCond{std::move(elses)}, elseBody{std::move(blk)} {}
+
+ForStmt::ForStmt(std::unique_ptr<Stmt> t_init, std::unique_ptr<BoolExpr> t_cond, std::unique_ptr<VarAssignStmt> t_inc)
+    : initializer{std::move(t_init)}, condition{std::move(t_cond)}, assign{std::move(t_inc)} {}
+
+ForRangeStmt::ForRangeStmt(std::unique_ptr<VarDeclStmt> t_init, std::unique_ptr<Expr> t_startExpr, std::unique_ptr<Expr> t_endExpr)
+    : varDecl{std::move(t_init)}, startExpression{std::move(t_startExpr)}, endExpression{std::move(t_endExpr)} {}
 
 Parser::Parser(const std::vector<Token>& t_tokens): tokens_{t_tokens}, index_{0} {}
+
+
+
 
 bool Parser::checkType(const TokenType t_type) const {
     return tokens_[index_].type == t_type;
@@ -139,7 +173,7 @@ std::unique_ptr<Stmt> Parser::parseStatement() {
 
         if (matchSubType(TokenSubType::LParen)) {
             index_-=2;
-            std::unique_ptr<Stmt> fnCallStmt = std::make_unique<FnCallStmt>(parseExpression());
+            std::unique_ptr<Stmt> fnCallStmt = std::make_unique<FnDeclStmt>(parseExpression());
             return fnCallStmt;
         }
 
@@ -186,7 +220,7 @@ std::unique_ptr<Expr> Parser::parseExpression() {
                 matchSubType(TokenSubType::Comma);
             }
 
-            auto fnCall = std::make_unique<FnCallExpr>(functionName, std::move(expressions));
+            auto fnCall = std::make_unique<CallExpr>(functionName, std::move(expressions));
 
             if (checkType(TokenType::Arithmetic)) {
                 const auto operandToken = consumeType(TokenType::Arithmetic);

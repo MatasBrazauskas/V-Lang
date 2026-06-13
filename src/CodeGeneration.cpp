@@ -112,7 +112,7 @@ void CodeGeneration::emitStmt(const Stmt& t_stmt) {
         return;
     }
 
-    if (const auto fnCall = dynamic_cast<const FnCallStmt*>(&t_stmt)) {
+    if (const auto fnCall = dynamic_cast<const FnDeclStmt*>(&t_stmt)) {
         outFile << indent() << emitExpr(*fnCall->fnCallExpr) << ";\n";
         return;
     }
@@ -129,7 +129,7 @@ std::string CodeGeneration::emitExpr(const Expr& t_expr) {
         return emitExpr(*binary->left) + ' ' + binary->op + ' ' + emitExpr(*binary->right);
     }
 
-    if (auto fn = dynamic_cast<const FnCallExpr*>(&t_expr)) {
+    if (auto fn = dynamic_cast<const CallExpr*>(&t_expr)) {
         std::string fnCall = fn->functionName + "(";
 
         for (int i = 0; i < fn->args.size(); ++i) {

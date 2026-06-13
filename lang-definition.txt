@@ -2,38 +2,30 @@ type = int | uint | float | char | bool | void
 aritBin = "+" | "-" | "*" | "/" | "%"
 cmpBin = "<" | ">" | "<=" | ">=" | "==" | "!="
 cmpMerge = "and" | "or"
-
 assignOp = "=" | "+=" | "-=" | "*=" | "/="
 unaryOp = "++" | "--"
-modifier = "&" | "*" | "[" expr? "]"
+modifier = "[" expr "]"
 
-expr = literalExpr | ident | callExpr | unaryExpr | binaryExpr | groupedExpr
+expr = literalExpr | ident | callExpr | binaryExpr
 
-literalExpr = intLiteral | floatLiteral | uintLiteral | charLiteral | stringLiteral
-groupedExpr = "(" expr ")"
-callExpr = ident "(" ?expr "," ... ?expr ")"
-unaryExpr = (unaryOp expr) | (expr unaryOp)
-binaryExpr = expr binaryOp expr
-binaryOp = aritBin
+literalExpr = intLiteral | floatLiteral | uintLiteral
+callExpr = ident "(" ?expr "," ... "," ?expr ")"
+binaryExpr = expr aritBin expr
 
-boolExpr = boolLiteral | ident | comparisonExpr | logicalExpr | notExpr | groupedBoolExpr | callExpr
+boolExpr = boolLiteral | ident | comparisonExpr | logicalExpr | notExpr | callExpr
 
 comparisonExpr = expr cmpBin expr
 logicalExpr = boolExpr cmpMerge boolExpr
 notExpr = "not" boolExpr
-groupedBoolExpr = "(" boolExpr ")"
 
-stmt = varInit | varDecl | varAssign | returnStmt | ifStmt | forLoop | forRange | expr | block
+stmt = varInit | varDecl | varAssign | returnStmt | condStmt | forLoop | forRange | expr | block
 
-varDecl = type ?modifier ident
+varDecl = ?"const" type ?modifier iden
 varInit = varDecl "=" expr
 varAssign = ident assignOp expr
 returnStmt = "return" ?expr
-fnDecl = "fn" ident "(" ?varDecl "," ... ?varDecl ")" type block
 block = "{" ?stmt "," ... ?stmt "}"
-condStmt =
-    "if" "(" ?(varInit ";") boolExpr ")" block
-    ?("elif" "(" ?(varInit ";") boolExpr ")" block)
-    ?("else" block)
-forLoop = "for" "(" ?varInit ";" ?boolExpr ";" ?varAssign ")" block
+fnDecl = "fn" ident "(" ?varDecl "," ... "," ?varDecl ")" type block
+condStmt = "if" "(" ?(varInit ";") boolExpr ")" block ?("elif" "(" ?(varInit ";") boolExpr ")" block) ... ?("elif" "(" ?(varInit ";") boolExpr ")" block) ?("else" block)
+forLoop = "for" "(" ?(varDecal | varInit) ";" ?boolExpr ";" ?expr ")" block
 forRange = "for" "(" varDecl ":" expr ".." expr ")" block

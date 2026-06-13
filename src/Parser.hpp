@@ -12,30 +12,70 @@ public:
     virtual ~Expr() noexcept = default;
 };
 
-class BinaryExpr : public Expr {
-public:
-    BinaryExpr() = delete;
-    explicit BinaryExpr(std::unique_ptr<Expr> t_lhs, std::unique_ptr<Expr> t_rhs, char t_op);
-
-    std::unique_ptr<Expr> left;
-    std::unique_ptr<Expr> right;
-    char op;
-};
-
 class LiteralExpr : public Expr {
 public:
-    LiteralExpr();
-    explicit LiteralExpr(const std::string& t_literalValue);
+    LiteralExpr() = delete;
+    explicit LiteralExpr(const std::string& t_literalType, const std::string& t_literalValue = "0");
+    std::string literalType;
     std::string literalValue;
 };
 
-class FnCallExpr: public Expr {
+class IdentExpr : public Expr {
 public:
-    FnCallExpr() = delete;
-    explicit FnCallExpr(const std::string&, std::vector<std::unique_ptr<Expr>>);
+    IdentExpr() = delete;
+    explicit IdentExpr(const std::string& t_identName);
+    std::string identName;
+};
+
+class CallExpr: public Expr {
+public:
+    CallExpr() = delete;
+    explicit CallExpr(const std::string&, std::vector<std::unique_ptr<Expr>>);
 
     std::string functionName;
     std::vector<std::unique_ptr<Expr>> args;
+};
+
+class BinaryExpr : public Expr {
+public:
+    BinaryExpr() = delete;
+    explicit BinaryExpr(std::unique_ptr<Expr> t_lhs, std::unique_ptr<Expr> t_rhs, const std::string& t_operand);
+
+    std::unique_ptr<Expr> leftExpr;
+    std::unique_ptr<Expr> rightExpr;
+    std::string operand;
+};
+
+class BoolExpr {
+public:
+    virtual ~BoolExpr() noexcept = default;
+};
+
+class ComparisonExpr : public BoolExpr {
+public:
+    ComparisonExpr() = delete;
+    explicit ComparisonExpr(std::unique_ptr<Expr> t_left, std::unique_ptr<Expr> t_right, const std::string& t_operand);
+
+    std::unique_ptr<Expr> leftExpr;
+    std::unique_ptr<Expr> rightExpr;
+    std::string operand;
+};
+
+class LogicalExpr : public BoolExpr {
+public:
+    LogicalExpr() = delete;
+    explicit LogicalExpr(std::unique_ptr<BoolExpr> t_left, std::unique_ptr<BoolExpr> t_right, const std::string& t_operand);
+
+    std::unique_ptr<BoolExpr> leftBoolExpr;
+    std::unique_ptr<BoolExpr> rightBoolExpr;
+    std::string operand;
+};
+
+class NotExpr : public BoolExpr {
+public:
+    NotExpr() = delete;
+    explicit NotExpr(std::unique_ptr<BoolExpr>);
+    std::unique_ptr<BoolExpr> boolExpr;
 };
 
 class Stmt {
@@ -43,23 +83,33 @@ public:
     virtual ~Stmt() noexcept = default;
 };
 
-class VarInitializerStmt : public Stmt {
+class VarDeclStmt : public Stmt {
 public:
-    VarInitializerStmt() = delete;
-    VarInitializerStmt(const std::string& t_typeName, const std::string& t_name, std::unique_ptr<Expr> t_initializer);
+    VarDeclStmt() = delete;
+    explicit VarDeclStmt(bool t_isCond, const std::string& t_typeName, const std::string& t_identName);
 
+    bool isConst;
     std::string typeName;
-    std::string name;
+    std::unique_ptr<Expr> initializer;
+    std::string identName;
+};
+
+class VarInitStmt : public Stmt {
+public:
+    VarInitStmt() = delete;
+    explicit VarInitStmt(std::unique_ptr<Stmt> t_varDecl, std::unique_ptr<Expr> t_initializer);
+
+    std::unique_ptr<Stmt> varDecl;
     std::unique_ptr<Expr> initializer;
 };
 
 class VarAssignStmt : public Stmt {
 public:
     VarAssignStmt() = delete;
-    VarAssignStmt(const std::string& t_name, std::unique_ptr<Expr> t_initializer);
+    explicit VarAssignStmt(const std::string& t_name, std::unique_ptr<Expr> t_assignment);
 
     std::string name;
-    std::unique_ptr<Expr> initializer;
+    std::unique_ptr<Expr> assignment;
 };
 
 class ReturnStmt : public Stmt {
@@ -69,21 +119,10 @@ public:
     std::unique_ptr<Expr> returnExpr;
 };
 
-class FnCallStmt : public Stmt {
-public:
-    FnCallStmt() = delete;
-    explicit FnCallStmt(std::unique_ptr<Expr>);
-
-    std::unique_ptr<Expr> fnCallExpr;
-};
-
-class CondStmt : public Stmt {
-public:
-
-};
-
 class BlockStmt : public Stmt {
 public:
+    BlockStmt() = delete;
+    explicit BlockStmt(std::vector<std::unique_ptr<Stmt>>);
     std::vector<std::unique_ptr<Stmt>> statements;
 };
 
@@ -92,17 +131,58 @@ struct Parameter {
     std::string name;
 };
 
-class Function {
+class FnDeclStmt : public Stmt {
 public:
+    FnDeclStmt() = delete;
+    explicit FnDeclStmt(const std::string& t_fnName, std::vector<std::unique_ptr<VarDeclStmt>> t_parameters, const std::string& t_returnType, std::unique_ptr<BlockStmt> t_body);
+
     std::string functionName;
+    std::vector<std::unique_ptr<VarDeclStmt>> parameters;
     std::string returnType;
-    std::vector<Parameter> parameters;
     std::unique_ptr<BlockStmt> body;
+};
+
+class IfStmt : public Stmt {
+public:
+    IfStmt() = delete;
+    explicit IfStmt(std::unique_ptr<VarInitStmt> t_init, std::unique_ptr<BoolExpr> t_cond, std::unique_ptr<BlockStmt> t_body);
+
+    std::unique_ptr<VarInitStmt> initializer;
+    std::unique_ptr<BoolExpr> condition;
+    std::unique_ptr<BlockStmt> body;
+};
+
+class CondStmt : public Stmt {
+public:
+    CondStmt() = delete;
+    explicit CondStmt(std::unique_ptr<IfStmt>, std::vector<std::unique_ptr<IfStmt>>, std::unique_ptr<BlockStmt>);
+    std::unique_ptr<IfStmt> ifCond;
+    std::vector<std::unique_ptr<IfStmt>> elsesCond;
+    std::unique_ptr<BlockStmt> elseBody;
+};
+
+class ForStmt : public Stmt {
+public:
+    ForStmt() = delete;
+    explicit ForStmt(std::unique_ptr<Stmt>, std::unique_ptr<BoolExpr>, std::unique_ptr<VarAssignStmt>);
+    std::unique_ptr<Stmt> initializer;
+    std::unique_ptr<BoolExpr> condition;
+    std::unique_ptr<VarAssignStmt> assign;
+};
+
+class ForRangeStmt : public Stmt {
+public:
+    ForRangeStmt() = delete;
+    explicit ForRangeStmt(std::unique_ptr<VarDeclStmt>, std::unique_ptr<Expr>, std::unique_ptr<Expr>);
+    std::unique_ptr<VarDeclStmt> varDecl;
+    std::unique_ptr<Expr> startExpression;
+    std::unique_ptr<Expr> endExpression;
 };
 
 class Program {
 public:
-    std::vector<Function> functions;
+    Program() = default;
+    std::vector<FnDeclStmt> functions;
 };
 
 class Parser {
@@ -120,7 +200,7 @@ private:
     const Token& consumeType(TokenType);
     const Token& consumeSubType(TokenSubType);
 
-    Function parseFunction();
+    FnDeclStmt parseFunction();
     std::unique_ptr<BlockStmt> parseBlock();
     std::unique_ptr<Stmt> parseStatement();
     std::unique_ptr<Expr> parseExpression();
