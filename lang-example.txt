@@ -9,14 +9,11 @@ extern (
 	fn fopen(char*, char*) FILE*
 )
 
-const (
-	float pi = 3.14
-)
+const float pi = 3.14
 
-alias (
-	type a = float
-	type ld = type(lambda)
-)
+alias a = float
+alias ld = type(lambda)
+
 
 fn fn1() int {
 	let x = 5
@@ -26,7 +23,7 @@ fn fn1() int {
 fn fn2(const char*! ptr) void {}
 
 struct Data {
-	int x; uint y
+	int x uint y
 }
 
 interface User {
@@ -64,7 +61,7 @@ fn main() {
 		}
 	}
 
-	for(int i : 0...argc) {
+	for(int i : 0..argc) {
 		
 	}
 
@@ -74,8 +71,8 @@ fn main() {
 
 	match (i) {
 	    	0 => {}
-		1...10 => {}
-		10...50 => {}
+		1..10 => {}
+		10..50 => {}
 		_ => {}
 	}
 
