@@ -8,21 +8,13 @@
 
 int main() {
     std::ifstream file{"temp.v"};
-    std::vector<std::string> lines;
+    Lexer lexer;
 
     for (std::string line; std::getline(file, line);){
-        lines.push_back(line);
+        lexer.tokenize(line);
     }
 
-    Lexer lexer;
-    lexer.tokenize(lines);
 
     Parser parser{lexer.tokens};
     const auto ast = parser.parse();
-
-    StaticCheck staticCheck;
-    staticCheck.staticAnalysis(ast);
-
-    CodeGeneration codeGeneration{"temp.c"};
-    codeGeneration.generateOutputFile(ast);
 }

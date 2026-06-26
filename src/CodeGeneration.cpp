@@ -3,7 +3,7 @@
 #include <format>
 #include <iostream>
 
-static int indentationLevel_;
+/*static int indentationLevel_;
 static std::string indent() {
     return std::string(indentationLevel_ * 4, ' ');
 }
@@ -152,4 +152,4 @@ void CodeGeneration::emitLibraries() {
         outFile << indent() << "#include <" << library << ">\n";
     }
     outFile << '\n';
-}
+}*/

@@ -1,119 +1,152 @@
 #pragma once
 
+#include <optional>
+#include <expected>
 #include <string>
 #include <vector>
 #include <unordered_map>
 
 enum class TokenType {
     Identifier,
-    Type,
-    Keyword,
-    Literal,
-    Arithmetic,
-    Separators,
-};
-
-enum class TokenSubType {
-    Identifier,
 
     IntLiteral,
+    UintLiteral,
+    LongLiteral,
+    ULongLiteral,
     FloatLiteral,
     StringLiteral,
     CharLiteral,
 
     Int,
     Uint,
+    Long,
+    ULong,
     Float,
     Char,
     Bool,
     Void,
 
+    Const,
     Func,
     Return,
+    If,
+    Elif,
+    Else,
+    For,
+    Default,
 
     Assign,
     Plus,
+    AssignPlus,
     Minus,
+    AssignMinus,
     Multiply,
+    AssignMultiply,
     Divide,
+    AssignDivide,
+    Module,
+    AssignModule,
 
-    LBrace,
-    RBrace,
+    Less,
+    More,
+    LessEq,
+    MoreEq,
+    Equals,
+    NotEquals,
+    And,
+    Or,
+    Not,
+
+    LCurlyBracket,
+    RCurlyBracket,
     LParen,
     RParen,
+    LSquareBracket,
+    RSquareBracket,
     Comma,
+    Semicolon,
+    Colon,
+    Range,
+    Reference,
+
+    EndOfEnum,
+};
+
+class CharIdentifier {
+public:
+    CharIdentifier() = default;
+    ~CharIdentifier() noexcept = default;
+
+    static bool isAlphabetic(char);
+    static  bool isDigit(char);
+    static  bool isWord(char);
+    static  bool isOperator(char);
+    static  bool isBrace(char);
+    static bool isSeparator(char);
+    static bool isWhiteSpace(char);
+    static bool isString(char);
+    static bool isChar(char);
+    static bool isComment(char, const std::string&, int);
 };
 
 struct Token {
     Token() = delete;
-    Token(TokenType, TokenSubType, std::string t_lexeme, int t_line);
+    Token(TokenType, std::string t_lexeme, int t_line);
     ~Token() noexcept = default;
 
     TokenType type;
-    TokenSubType subType;
     std::string lexeme;
     int line;
 };
 
 enum class ParserState{ Regular, StringLiteral /*, MultiLineComment*/};
 
+class TokenIdentifier {
+public:
+    TokenIdentifier();
+    ~TokenIdentifier() noexcept = default;
+    [[nodiscard]] std::expected<TokenType, std::string> parseNumberLiteral(std::string_view) const;
+    [[nodiscard]] std::expected<TokenType, std::string> parseWord(std::string_view) const;
+private:
+
+
+    std::unordered_map<std::string, TokenType> keywords;
+    std::unordered_map<std::string, TokenType> types;
+    std::unordered_map<std::string, TokenType> operators;
+    std::unordered_map<std::string, TokenType> arithmetic;
+    std::unordered_map<std::string, TokenType> separators;
+};
+
 class TokenParser {
 public:
     TokenParser();
     ~TokenParser() noexcept = default;
 
-    [[nodiscard]] std::vector<std::tuple<int, int, std::string>> consumeLine(const std::string&);
+    [[nodiscard]] std::vector<Token> consumeLine(const TokenIdentifier&, std::string_view);
 private:
-    [[nodiscard]] bool isAlphabetic(char) const;
-    [[nodiscard]] bool isDigit(char) const;
-    [[nodiscard]] bool isNumeric(char) const;
-    [[nodiscard]] bool isAlphaNumeric(char) const;
-    [[nodiscard]] bool isWord(char) const;
-    [[nodiscard]] bool isOperator(char) const;
-    [[nodiscard]] bool isBrace(char) const;
-    [[nodiscard]] bool isWhiteSpace(char) const;
-    [[nodiscard]] bool isString(char) const;
-    [[nodiscard]] bool isChar(char) const;
-    [[nodiscard]] bool isComment(char, const std::string&, int) const;
 
     [[nodiscard]] std::tuple<int, std::string> parseWord(const std::string& t_input, int) const;
-    [[nodiscard]] std::tuple<int, std::string> parseNumeric(const std::string& t_input, int) const;
+    [[nodiscard]] std::tuple<int, std::string> generateNumber(const std::string& t_input, int) const;
     [[nodiscard]] std::tuple<int, std::string> parseOperator(const std::string& t_input, int) const;
     [[nodiscard]] std::tuple<int, std::string> parseBraces(const std::string& t_input, int) const;
+    [[nodiscard]] std::tuple<int, std::string> parseSeparator(const std::string& t_input, int) const;
     [[nodiscard]] int skipComment(const std::string& t_input, int);
     [[nodiscard]] std::tuple<int, std::string> parseString(const std::string& t_input, int);
     [[nodiscard]] std::tuple<int, std::string> parseChar(const std::string& t_input, int);
     [[nodiscard]] int skipIndentation(const std::string& t_input, int) const;
-
-    friend class TokenIdentifier;
 
     ParserState parserState;
     std::string stringLiteral;
     int rowIndex;
 };
 
-class TokenIdentifier {
-public:
-    TokenIdentifier();
-    ~TokenIdentifier() noexcept = default;
-
-    std::vector<Token> consumeStrToken(const TokenParser&, const std::vector<std::tuple<int, int, std::string>>&) const;
-private:
-    std::unordered_map<std::string, TokenSubType> keywords;
-    std::unordered_map<std::string, TokenSubType> types;
-    std::unordered_map<std::string, TokenSubType> arithmetic;
-    std::unordered_map<std::string, TokenSubType> separators;
-
-    TokenSubType getNumberType(const TokenParser&, const std::string&) const;
-};
-
 class Lexer {
 public:
-    Lexer() = default;
+    Lexer();
     ~Lexer() noexcept = default;
-    void tokenize(const std::vector<std::string>&);
-    std::vector<Token> tokens{};
+    void tokenize(std::string_view);
 private:
-    TokenIdentifier tokenIdentifier;
+    std::vector<Token> tokens;
     TokenParser tokenParser;
+    TokenIdentifier tokenIdentifier;
 };

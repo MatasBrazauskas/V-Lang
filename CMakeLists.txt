@@ -8,12 +8,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_executable(v_lang
     main.cpp
     src/Lexer.cpp
-    src/Lexer.hpp
     src/Parser.cpp
-    src/Parser.hpp
     src/CodeGeneration.cpp
-    src/CodeGeneration.hpp
-    src/StaticCheck.cpp
     src/StaticCheck.hpp
 )
 

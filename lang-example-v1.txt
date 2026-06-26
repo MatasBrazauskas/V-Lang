@@ -4,17 +4,16 @@ fn fn1() int {
 }
 
 fn main() void {
-	int[6] a
-
-	for(int k; k < 5; k++) {
-		if (k % 2 == 0 or b == 1) {
+	for(int k; k < 5; k+=1) {
+		if (k % 2 == 0 or b %= 1) {
 			i++
-		} else if (k % 3 == 0 and k == 1) {
+		} else if (k % 3 != 0 and k >= 1) {
 			i+=2
 		} else if (not boolean) {
 			j++
 		}
 	}
+
 
 	for(int i : 0..argc) {
 		

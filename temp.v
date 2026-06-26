@@ -1,14 +1,32 @@
-fn temp(int a, int b) int {
-	return a + b
-}
+	for(int k; k& < 5; k+=+1) {
+	"dawdaw
+	dawdaw
+	dawdawdawd
+	awdawda" dawda
+	'a'
+	100_000_000
+	5.0_0_0_00
+		if (k % 2 === 0 or b %= 1) {
+			i++
+		} else if (k % 3 != 0 and k >= 1) {
+			i+=2
+		} else if (not boolean) {
+			j++
+		}
+	}
 
-fn someFunc(int abs, int ok) int {
-	return temp(1 + 2 + temp(1,2), 0) + 10
-}
+	Data data = { x: 60, y: 50 }
 
-fn main() int {
-	int a = 10 + 50 + 5.0
-	a = 1
-	temp(0,0)
-	int c = 10 + temp(1 + 2, 2 + 3) + 1 + someFunc(a + 1, 0)
+	for(int i : 0..argc...10.0) {
+
+	}
+
+	if(int a = 0; a == 1) {
+
+	} elif(int b = 0; b == 0) {
+
+	} else {
+	}
+
+    _
 }

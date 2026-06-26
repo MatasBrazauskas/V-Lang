@@ -29,7 +29,7 @@ public:
     ~CodeGeneration() noexcept = default;
     void generateOutputFile(const Program&);
 private:
-    void emitFunction(const Function&);
+    //void emitFunction(const Function&);
     void emitBlock(const BlockStmt&);
     void emitStmt(const Stmt&);
     std::string emitExpr(const Expr& expr);
