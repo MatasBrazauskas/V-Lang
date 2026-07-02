@@ -15,6 +15,6 @@ int main() {
     }
 
 
-    Parser parser{lexer.tokens};
-    const auto ast = parser.parse();
+    /*Parser parser{lexer.tokens};
+    const auto ast = parser.parse();*/
 }

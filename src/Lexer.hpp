@@ -1,12 +1,21 @@
 #pragma once
 
-#include <optional>
 #include <expected>
 #include <string>
 #include <vector>
 #include <unordered_map>
 
 enum class TokenType {
+    None,
+    Literal,
+    Type,
+    ArithmeticOp,
+    AssignOp,
+    ComparisonOp,
+    LogicalOp,
+};
+
+enum class TokenSubType {
     Identifier,
 
     IntLiteral,
@@ -16,6 +25,9 @@ enum class TokenType {
     FloatLiteral,
     StringLiteral,
     CharLiteral,
+
+    True,
+    False,
 
     Int,
     Uint,
@@ -86,15 +98,16 @@ public:
     static bool isWhiteSpace(char);
     static bool isString(char);
     static bool isChar(char);
-    static bool isComment(char, const std::string&, int);
+    static bool isComment(char, std::string_view, int);
 };
 
 struct Token {
     Token() = delete;
-    Token(TokenType, std::string t_lexeme, int t_line);
+    Token(TokenType, TokenSubType, std::string t_lexeme, int t_line);
     ~Token() noexcept = default;
 
     TokenType type;
+    TokenSubType subType;
     std::string lexeme;
     int line;
 };
@@ -105,16 +118,18 @@ class TokenIdentifier {
 public:
     TokenIdentifier();
     ~TokenIdentifier() noexcept = default;
-    [[nodiscard]] std::expected<TokenType, std::string> parseNumberLiteral(std::string_view) const;
-    [[nodiscard]] std::expected<TokenType, std::string> parseWord(std::string_view) const;
+    [[nodiscard]] std::expected<TokenSubType, std::string> parseNumberLiteral(std::string_view) const;
+    [[nodiscard]] TokenSubType parseWord(std::string_view) const;
 private:
 
 
-    std::unordered_map<std::string, TokenType> keywords;
-    std::unordered_map<std::string, TokenType> types;
-    std::unordered_map<std::string, TokenType> operators;
-    std::unordered_map<std::string, TokenType> arithmetic;
-    std::unordered_map<std::string, TokenType> separators;
+    std::unordered_map<std::string_view, TokenSubType> keywords;
+    std::unordered_map<std::string_view, TokenSubType> types;
+    std::unordered_map<std::string_view, TokenSubType> arithmeticOp;
+    std::unordered_map<std::string_view, TokenSubType> assignOp;
+    std::unordered_map<std::string_view, TokenSubType> comparisonOp;
+    std::unordered_map<std::string_view, TokenSubType> logicalOp;
+    std::unordered_map<std::string_view, TokenSubType> separators;
 };
 
 class TokenParser {
@@ -125,11 +140,10 @@ public:
     [[nodiscard]] std::vector<Token> consumeLine(const TokenIdentifier&, std::string_view);
 private:
 
-    [[nodiscard]] std::tuple<int, std::string> parseWord(const std::string& t_input, int) const;
-    [[nodiscard]] std::tuple<int, std::string> generateNumber(const std::string& t_input, int) const;
-    [[nodiscard]] std::tuple<int, std::string> parseOperator(const std::string& t_input, int) const;
-    [[nodiscard]] std::tuple<int, std::string> parseBraces(const std::string& t_input, int) const;
-    [[nodiscard]] std::tuple<int, std::string> parseSeparator(const std::string& t_input, int) const;
+    [[nodiscard]] std::tuple<int, std::string_view> generateWord(std::string_view t_input, int) const;
+    [[nodiscard]] std::tuple<int, std::string_view> generateNumber(std::string_view t_input, int) const;
+    [[nodiscard]] std::tuple<int, std::string_view> generateOperator(std::string_view t_input, int) const;
+    [[nodiscard]] std::tuple<int, std::string_view> parseSeparator(const std::string& t_input, int) const;
     [[nodiscard]] int skipComment(const std::string& t_input, int);
     [[nodiscard]] std::tuple<int, std::string> parseString(const std::string& t_input, int);
     [[nodiscard]] std::tuple<int, std::string> parseChar(const std::string& t_input, int);

@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <unordered_map>
+#include <cassert>
 
 using namespace std::string_literals;
 
@@ -98,6 +99,10 @@ bool CharIdentifier::isSeparator(const char t_inputChar) {
     return false;
 }
 
+bool CharIdentifier::isWhiteSpace(const char t_inputChar) {
+    return t_inputChar == ' ' || t_inputChar == '\r' || t_inputChar == '\t';
+}
+
 bool CharIdentifier::isString(const char t_inputChar) {
     if (t_inputChar == '"') {
         return true;
@@ -114,7 +119,7 @@ bool CharIdentifier::isChar(const char t_inputChar) {
     return false;
 }
 
-bool CharIdentifier::isComment(const char t_inputChar, const std::string& t_line, const int t_index) {
+bool CharIdentifier::isComment(const char t_inputChar, const std::string_view t_line, const int t_index) {
     if (t_inputChar != '/') {
         return false;
     }
@@ -132,74 +137,83 @@ bool CharIdentifier::isComment(const char t_inputChar, const std::string& t_line
 }
 
 TokenIdentifier::TokenIdentifier() {
-    types = {
-        {"int", TokenType::Int},
-        {"uint", TokenType::Uint},
-        {"long", TokenType::Long},
-        {"ulong", TokenType::ULong},
-        {"float", TokenType::Float},
-        {"char", TokenType::Char},
-        {"bool", TokenType::Bool},
-        {"void", TokenType::Void},
-    };
-
     keywords= {
-        {"const", TokenType::Const},
-        {"fn", TokenType::Func},
-        {"return", TokenType::Return},
-        {"if", TokenType::If},
-        {"elif", TokenType::Elif},
-        {"else", TokenType::Else},
-        {"for", TokenType::For},
-        {"_", TokenType::Default},
+        {"const", TokenSubType::Const},
+        {"fn", TokenSubType::Func},
+        {"return", TokenSubType::Return},
+        {"if", TokenSubType::If},
+        {"elif", TokenSubType::Elif},
+        {"else", TokenSubType::Else},
+        {"for", TokenSubType::For},
     };
 
-    arithmetic = {
-        {"=", TokenType::Assign},
-        {"+", TokenType::Plus},
-        {"+=", TokenType::AssignPlus},
-        {"-", TokenType::Minus},
-        {"-=", TokenType::AssignMinus},
-        {"*", TokenType::Multiply},
-        {"*=", TokenType::AssignMultiply},
-        {"/", TokenType::Divide},
-        {"/=", TokenType::AssignDivide},
-        {"%", TokenType::Module},
-        {"%=", TokenType::AssignModule},
+    types = {
+        {"int", TokenSubType::Int},
+        {"uint", TokenSubType::Uint},
+        {"long", TokenSubType::Long},
+        {"ulong", TokenSubType::ULong},
+        {"float", TokenSubType::Float},
+        {"char", TokenSubType::Char},
+        {"bool", TokenSubType::Bool},
+        {"void", TokenSubType::Void},
     };
 
-    operators = {
-        {"==", TokenType::Equals},
-        {"!=", TokenType::NotEquals},
-        {"<", TokenType::Less},
-        {">", TokenType::More},
-        {"<=", TokenType::LessEq},
-        {">=", TokenType::MoreEq},
-        {"and", TokenType::And},
-        {"or", TokenType::Or},
-        {"not", TokenType::Not},
+
+    arithmeticOp = {
+        {"=", TokenSubType::Assign},
+        {"+", TokenSubType::Plus},
+        {"-", TokenSubType::Minus},
+        {"*", TokenSubType::Multiply},
+        {"/", TokenSubType::Divide},
+        {"%", TokenSubType::Module},
+    };
+
+    assignOp = {
+        {"+=", TokenSubType::AssignPlus},
+        {"-=", TokenSubType::AssignMinus},
+        {"*=", TokenSubType::AssignMultiply},
+        {"/=", TokenSubType::AssignDivide},
+        {"%=", TokenSubType::AssignModule},
+    };
+
+    comparisonOp = {
+        {"==", TokenSubType::Equals},
+        {"!=", TokenSubType::NotEquals},
+        {"<", TokenSubType::Less},
+        {">", TokenSubType::More},
+        {"<=", TokenSubType::LessEq},
+        {">=", TokenSubType::MoreEq},
+    };
+
+    logicalOp = {
+        {"and", TokenSubType::And},
+        {"or", TokenSubType::Or},
+        {"not", TokenSubType::Not},
     };
 
     separators = {
-        {"{", TokenType::LCurlyBracket},
-        {"}", TokenType::RCurlyBracket},
-        {"(", TokenType::LParen},
-        {")", TokenType::RParen},
-        {"[", TokenType::LSquareBracket},
-        {"]", TokenType::RSquareBracket},
-        {",", TokenType::Comma},
-        {";", TokenType::Semicolon},
-        {":", TokenType::Colon},
-        {"..", TokenType::Range},
-        {"&", TokenType::Reference},
+        {"{", TokenSubType::LCurlyBracket},
+        {"}", TokenSubType::RCurlyBracket},
+        {"(", TokenSubType::LParen},
+        {")", TokenSubType::RParen},
+        {"[", TokenSubType::LSquareBracket},
+        {"]", TokenSubType::RSquareBracket},
+        {",", TokenSubType::Comma},
+        {";", TokenSubType::Semicolon},
+        {":", TokenSubType::Colon},
+        {"..", TokenSubType::Range},
+        {"&", TokenSubType::Reference},
+        {"_", TokenSubType::Default}
     };
+
+    assert(static_cast<size_t>(TokenSubType::EndOfEnum) == keywords.size() + types.size() + arithmeticOp.size() + comparisonOp.size() + logicalOp.size() + separators.size());
 }
 
 
-std::expected<TokenType, std::string> TokenIdentifier::parseNumberLiteral(std::string_view t_word) const {
+std::expected<TokenSubType, std::string> TokenIdentifier::parseNumberLiteral(std::string_view t_word) const {
     bool dotPresent{false};
     bool prevUnderscore{false};
-    auto type = TokenType::IntLiteral;
+    auto type = TokenSubType::IntLiteral;
 
     for (const char i : t_word) {
         if (i == '.') {
@@ -207,7 +221,7 @@ std::expected<TokenType, std::string> TokenIdentifier::parseNumberLiteral(std::s
                 return std::unexpected("Trailing dot ('.').");
             }
 
-            type = TokenType::FloatLiteral;
+            type = TokenSubType::FloatLiteral;
             dotPresent = true;
         } else if (i == '_') {
             if (prevUnderscore) {
@@ -215,7 +229,7 @@ std::expected<TokenType, std::string> TokenIdentifier::parseNumberLiteral(std::s
             }
 
             prevUnderscore = true;
-        } else {
+        } else if (CharIdentifier::isDigit(i)) {
             prevUnderscore = false;
         }
     }
@@ -223,8 +237,16 @@ std::expected<TokenType, std::string> TokenIdentifier::parseNumberLiteral(std::s
     return type;
 }
 
-std::expected<TokenType, std::string> TokenIdentifier::parseWord(std::string_view) const {
+TokenSubType TokenIdentifier::parseWord(std::string_view t_strToken) const {
+    if (const auto it = keywords.find(t_strToken); it != keywords.end()) {
+        return it->second;
+    }
 
+    if (const auto it = types.find(t_strToken); it != types.end()) {
+        return it->second;
+    }
+
+    return TokenSubType::Identifier;
 }
 
 TokenParser::TokenParser(): parserState{ParserState::Regular}, rowIndex{0} {}
@@ -245,41 +267,41 @@ std::vector<Token> TokenParser::consumeLine(const TokenIdentifier& t_tokenIdent,
             }
         }
         else {
-            if (isComment(t_line[index], t_line, index)) {
+            if (CharIdentifier::isComment(t_line[index], t_line, index)) {
                 index = skipComment(t_line, index);
-            } else if (isString(t_line[index])) {
+            } else if (CharIdentifier::isString(t_line[index])) {
                 parserState = ParserState::StringLiteral;
             }else if (CharIdentifier::isChar(t_line[index])) {
                 const auto [newIndex, token] = parseChar(t_line, index);
 
                 index = newIndex;
                 result.emplace_back(rowIndex, newIndex, token);
-            } else if (isAlphabetic(t_line[index])) {
-                const auto [newIndex, token] = parseWord(t_line, index);
+            } else if (CharIdentifier::isAlphabetic(t_line[index])) {
+                const auto [newIndex, token] = generateWord(t_line, index);
 
                 index = newIndex;
                 result.emplace_back(rowIndex, newIndex, token);
-            } else if (isDigit(t_line[index])) {
+            } else if (CharIdentifier::isDigit(t_line[index])) {
                 const auto [newIndex, token]= parseNumeric(t_line, index);
 
                 index = newIndex;
                 result.emplace_back(rowIndex, newIndex, token);
-            } else if (isOperator(t_line[index])) {
+            } else if (CharIdentifier::isOperator(t_line[index])) {
                 const auto [newIndex, token]= parseOperator(t_line, index);
 
                 index = newIndex;
                 result.emplace_back(rowIndex, newIndex, token);
-            } else if (isBrace(t_line[index])) {
+            } else if (CharIdentifier::isBrace(t_line[index])) {
                 const auto [newIndex, token] = parseBraces(t_line, index);
 
                 index = newIndex;
                 result.emplace_back(rowIndex, newIndex, token);
-            } else if (isSeparator(t_line[index])) {
+            } else if (CharIdentifier::isSeparator(t_line[index])) {
                 const auto [newIndex, token] = parseSeparator(t_line, index);
 
                 index = newIndex;
                 result.emplace_back(rowIndex, newIndex, token);
-            } else if (isWhiteSpace(t_line[index])) {
+            } else if (CharIdentifier::isWhiteSpace(t_line[index])) {
                 index = skipIndentation(t_line, index);
             } else {
                 throw std::runtime_error("Lexer::tokenize() error");
@@ -292,26 +314,22 @@ std::vector<Token> TokenParser::consumeLine(const TokenIdentifier& t_tokenIdent,
     return result;
 }
 
-bool TokenParser::isWhiteSpace(const char t_inputChar) const {
-    return t_inputChar == ' ' || t_inputChar == '\r' || t_inputChar == '\t';
-}
 
-std::tuple<int, std::string> TokenParser::parseWord(const std::string& t_input, const int t_index) const {
+std::tuple<int, std::string_view> TokenParser::generateWord(std::string_view t_input, const int t_index) const {
     int index{t_index};
 
-    while (index < static_cast<int>(t_input.length()) && isWord(t_input[index])) {
+    while (index < static_cast<int>(t_input.length()) && CharIdentifier::isWord(t_input[index])) {
         ++index;
     }
 
     const auto token = t_input.substr(t_index, index - t_index);
-
     return std::make_tuple(index, token);
 }
 
-std::tuple<int, std::string> TokenParser::generateNumber(const std::string& t_input, const int t_index) const {
+std::tuple<int, std::string_view> TokenParser::generateNumber(std::string_view t_input, const int t_index) const {
     int index{t_index};
 
-    while (index < static_cast<int>(t_input.length()) and (isDigit(t_input[index]) or t_input[index] == '_')) {
+    while (index < static_cast<int>(t_input.length()) and (CharIdentifier::isDigit(t_input[index]) or t_input[index] == '_')) {
         ++index;
     }
 
@@ -323,7 +341,7 @@ std::tuple<int, std::string> TokenParser::generateNumber(const std::string& t_in
     const int lastDigitIndex{index};
     index++;
 
-    while (index < static_cast<int>(t_input.length()) and (isDigit(t_input[index]) or t_input[index] == '_')) {
+    while (index < static_cast<int>(t_input.length()) and (CharIdentifier::isDigit(t_input[index]) or t_input[index] == '_')) {
         ++index;
     }
 
@@ -357,7 +375,7 @@ std::tuple<int, std::string> TokenParser::parseBraces(const std::string& t_input
 
 std::tuple<int, std::string> TokenParser::parseSeparator(const std::string& t_input, int t_index) const {
     int index{t_index};
-    while (index < static_cast<int>(t_input.length()) && isSeparator(t_input[index])) {
+    while (index < static_cast<int>(t_input.length()) && CharIdentifier::isSeparator(t_input[index])) {
         ++index;
     }
 
@@ -414,18 +432,14 @@ std::tuple<int, std::string> TokenParser::parseChar(const std::string& t_input, 
 int TokenParser::skipIndentation(const std::string& t_input, const int t_index) const {
     int index{t_index};
 
-    while (index < static_cast<int>(t_input.length()) && isWhiteSpace(t_input[index])) {
+    while (index < static_cast<int>(t_input.length()) && CharIdentifier::isWhiteSpace(t_input[index])) {
         ++index;
     }
 
     return index;
 }
-Token::Token(const TokenType t_type, const std::string t_lexeme, const int t_line)
+Token::Token(const TokenSubType t_type, const std::string t_lexeme, const int t_line)
     : type{t_type}, lexeme{t_lexeme}, line{t_line} {}
-
-TokenIdentifier::TokenIdentifier() {
-}
-
 
 Lexer::Lexer(): tokens{}, tokenParser{}, tokenIdentifier{} {}
 
@@ -435,5 +449,5 @@ void Lexer::tokenize(std::string_view t_line) {
         return;
     }
     const auto strTokens = tokenParser.consumeLine(&tokenIdentifier, t_line);
-    tokens.insert(tokens.end(), tokensVec.begin(), tokensVec.end());
+    tokens.insert(tokens.end(), strTokens.begin(), strTokens.end());
 }

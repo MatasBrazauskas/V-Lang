@@ -3,8 +3,8 @@
 #include <memory>
 #include <vector>
 
-enum class TokenType;
-enum class TokenType;
+enum class TokenSubType;
+enum class TokenSubType;
 struct Token;
 
 class Expr {
@@ -228,14 +228,14 @@ class Consumer {
 public:
     Consumer() = delete;
     explicit Consumer(const std::vector<Token>& t_tokens): tokens_{t_tokens}, index_{0} {}
-    [[nodiscard]] bool checkType(TokenType) const;
-    [[nodiscard]] bool checkSubType(TokenType) const;
+    [[nodiscard]] bool checkType(TokenSubType) const;
+    [[nodiscard]] bool checkSubType(TokenSubType) const;
 
-    [[nodiscard]] bool matchType(TokenType);
-    [[nodiscard]] bool matchSubType(TokenType);
+    [[nodiscard]] bool matchType(TokenSubType);
+    [[nodiscard]] bool matchSubType(TokenSubType);
 
-    const Token& consumeType(TokenType);
-    const Token& consumeSubType(TokenType);
+    const Token& consumeType(TokenSubType);
+    const Token& consumeSubType(TokenSubType);
 
     [[nodiscard]] bool isEnd() const;
 private:
