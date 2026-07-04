@@ -8,136 +8,141 @@
 
 using namespace std::string_literals;
 
-bool CharIdentifier::isAlphabetic(const char t_inputChar) {
-    if (t_inputChar >= 'a' && t_inputChar <= 'z') {
-        return true;
-    }
+namespace {
+    bool isLetter(const char t_inputChar) {
+        if (t_inputChar >= 'a' && t_inputChar <= 'z') {
+            return true;
+        }
 
-    if (t_inputChar >= 'A' && t_inputChar <= 'Z') {
-        return true;
-    }
-    return false;
-}
-
-bool CharIdentifier::isDigit(const char t_inputChar) {
-    if (t_inputChar >= '0' && t_inputChar <= '9') {
-        return true;
-    }
-
-    return false;
-}
-
-bool CharIdentifier::isWord(const char t_inputChar) {
-    if (isAlphabetic(t_inputChar)) {
-        return true;
-    }
-
-    if (isDigit(t_inputChar)) {
-        return true;
-    }
-
-    if (t_inputChar == '_') {
-        return true;
-    }
-
-    return false;
-}
-
-bool CharIdentifier::isOperator(const char t_inputChar) {
-    if (t_inputChar == '+' or t_inputChar == '-') {
-        return true;
-    }
-
-    if (t_inputChar == '*' or t_inputChar == '/') {
-        return true;
-    }
-
-    if (t_inputChar == '=' or t_inputChar == '%') {
-        return true;
-    }
-
-    if (t_inputChar == '>' or t_inputChar == '<') {
-        return true;
-    }
-
-    if (t_inputChar == '!') {
-        return true;
-    }
-
-    return false;
-}
-
-bool CharIdentifier::isBrace(const char t_inputChar) {
-    if (t_inputChar == '(' or t_inputChar == ')') {
-        return true;
-    }
-
-    if (t_inputChar == '{' or t_inputChar == '}') {
-        return true;
-    }
-
-    if (t_inputChar == '[' or t_inputChar == ']') {
-        return true;
-    }
-
-    return false;
-}
-
-bool CharIdentifier::isSeparator(const char t_inputChar) {
-    if (t_inputChar == ',' or t_inputChar == ';') {
-        return true;
-    }
-
-    if (t_inputChar == ':' or t_inputChar == '.') {
-        return true;
-    }
-
-    if (t_inputChar == '&' or t_inputChar == '_') {
-        return true;
-    }
-
-    return false;
-}
-
-bool CharIdentifier::isWhiteSpace(const char t_inputChar) {
-    return t_inputChar == ' ' || t_inputChar == '\r' || t_inputChar == '\t';
-}
-
-bool CharIdentifier::isString(const char t_inputChar) {
-    if (t_inputChar == '"') {
-        return true;
-    }
-
-    return false;
-}
-
-bool CharIdentifier::isChar(const char t_inputChar) {
-    if (t_inputChar == '\'') {
-        return true;
-    }
-
-    return false;
-}
-
-bool CharIdentifier::isComment(const char t_inputChar, const std::string_view t_line, const int t_index) {
-    if (t_inputChar != '/') {
+        if (t_inputChar >= 'A' && t_inputChar <= 'Z') {
+            return true;
+        }
         return false;
     }
 
-    const int index{t_index + 1};
-    if (index == t_line.length()) {
+    bool isDigit(const char t_inputChar) {
+        if (t_inputChar >= '0' && t_inputChar <= '9') {
+            return true;
+        }
+
         return false;
     }
 
-    if (t_line[index] == '/') {
-        return true;
+    bool isWord(const char t_inputChar) {
+        if (isLetter(t_inputChar)) {
+            return true;
+        }
+
+        if (isDigit(t_inputChar)) {
+            return true;
+        }
+
+        if (t_inputChar == '_') {
+            return true;
+        }
+
+        return false;
     }
 
-    return false;
+    bool isOperator(const char t_inputChar) {
+        if (t_inputChar == '+' or t_inputChar == '-') {
+            return true;
+        }
+
+        if (t_inputChar == '*' or t_inputChar == '/') {
+            return true;
+        }
+
+        if (t_inputChar == '=' or t_inputChar == '%') {
+            return true;
+        }
+
+        if (t_inputChar == '>' or t_inputChar == '<') {
+            return true;
+        }
+
+        if (t_inputChar == '!') {
+            return true;
+        }
+
+        return false;
+    }
+
+    bool isBrace(const char t_inputChar) {
+        if (t_inputChar == '(' or t_inputChar == ')') {
+            return true;
+        }
+
+        if (t_inputChar == '{' or t_inputChar == '}') {
+            return true;
+        }
+
+        if (t_inputChar == '[' or t_inputChar == ']') {
+            return true;
+        }
+
+        return false;
+    }
+
+    bool isSeparator(const char t_inputChar) {
+        if (t_inputChar == ',' or t_inputChar == ';') {
+            return true;
+        }
+
+        if (t_inputChar == ':' or t_inputChar == '.') {
+            return true;
+        }
+
+        if (t_inputChar == '&' or t_inputChar == '_') {
+            return true;
+        }
+
+        return false;
+    }
+
+    bool isWhiteSpace(const char t_inputChar) {
+        return t_inputChar == ' ' || t_inputChar == '\r' || t_inputChar == '\t';
+    }
+
+    bool isString(const char t_inputChar) {
+        if (t_inputChar == '"') {
+            return true;
+        }
+
+        return false;
+    }
+
+    bool isChar(const char t_inputChar) {
+        if (t_inputChar == '\'') {
+            return true;
+        }
+
+        return false;
+    }
+
+    bool isComment(const char t_inputChar, const std::string_view t_line, const int t_index) {
+        if (t_inputChar != '/') {
+            return false;
+        }
+
+        const int index{t_index + 1};
+        if (index == t_line.length()) {
+            return false;
+        }
+
+        if (t_line[index] == '/') {
+            return true;
+        }
+
+        return false;
+    }
 }
+
+Token::Token(const TokenType t_type, const TokenSubType t_subType, const std::string_view t_lexeme, const int t_line)
+    : type{t_type}, subType{t_subType}, lexeme{t_lexeme}, line{t_line} {}
 
 TokenIdentifier::TokenIdentifier() {
-    keywords= {
+    keywords = {
         {"const", TokenSubType::Const},
         {"fn", TokenSubType::Func},
         {"return", TokenSubType::Return},
@@ -160,7 +165,6 @@ TokenIdentifier::TokenIdentifier() {
 
 
     arithmeticOp = {
-        {"=", TokenSubType::Assign},
         {"+", TokenSubType::Plus},
         {"-", TokenSubType::Minus},
         {"*", TokenSubType::Multiply},
@@ -169,6 +173,7 @@ TokenIdentifier::TokenIdentifier() {
     };
 
     assignOp = {
+        {"=", TokenSubType::Assign},
         {"+=", TokenSubType::AssignPlus},
         {"-=", TokenSubType::AssignMinus},
         {"*=", TokenSubType::AssignMultiply},
@@ -209,50 +214,83 @@ TokenIdentifier::TokenIdentifier() {
     assert(static_cast<size_t>(TokenSubType::EndOfEnum) == keywords.size() + types.size() + arithmeticOp.size() + comparisonOp.size() + logicalOp.size() + separators.size());
 }
 
+std::tuple<TokenType, TokenSubType> TokenIdentifier::identifyKeyword(const std::string_view t_keyWord) const {
+    if (const auto it = keywords.find(t_keyWord); it != keywords.end()) {
+        return std::make_tuple(TokenType::None, it->second);
+    }
 
-std::expected<TokenSubType, std::string> TokenIdentifier::parseNumberLiteral(std::string_view t_word) const {
+    if (const auto it = types.find(t_keyWord); it != types.end()) {
+        return std::make_tuple(TokenType::Type, it->second);
+    }
+
+    if (const auto it = types.find(t_keyWord); it != types.end()) {
+        return std::make_tuple(TokenType::Type, it->second);
+    }
+
+    if (const auto it = logicalOp.find(t_keyWord); it != logicalOp.end()) {
+        return std::make_tuple(TokenType::LogicalOp, it->second);
+    }
+
+    return std::make_tuple(TokenType::None, TokenSubType::Identifier);
+}
+
+std::tuple<TokenType, TokenSubType> TokenIdentifier::identifyNumberLiteral(const std::string_view t_word) const {
     bool dotPresent{false};
     bool prevUnderscore{false};
-    auto type = TokenSubType::IntLiteral;
+
+    auto type = TokenType::Literal;
+    std::string_view suffix;
 
     for (const char i : t_word) {
         if (i == '.') {
-            if (dotPresent) {
-                return std::unexpected("Trailing dot ('.').");
-            }
-
-            type = TokenSubType::FloatLiteral;
             dotPresent = true;
         } else if (i == '_') {
             if (prevUnderscore) {
-                return std::unexpected("Trailing underscore ('_').");
+                throw std::runtime_error("Trailing underscore ('_').");
             }
 
             prevUnderscore = true;
-        } else if (CharIdentifier::isDigit(i)) {
+        } else if (isDigit(i)) {
             prevUnderscore = false;
+        } else if (isLetter(i)) {
+            break;
+        } else {
+            throw std::runtime_error("Invalid character inside of a literal.");
         }
     }
 
-    return type;
-}
-
-TokenSubType TokenIdentifier::parseWord(std::string_view t_strToken) const {
-    if (const auto it = keywords.find(t_strToken); it != keywords.end()) {
-        return it->second;
+    if (suffix.empty()) {
+        throw std::runtime_error("All literals need to have suffixes.");
     }
 
-    if (const auto it = types.find(t_strToken); it != types.end()) {
-        return it->second;
+    std::unordered_map<std::string_view, TokenSubType> map = {
+        {"f", TokenSubType::FloatLiteral},
+        {"d", TokenSubType::IntLiteral},
+        {"u", TokenSubType::UintLiteral},
+        {"l", TokenSubType::LongLiteral},
+        {"lu", TokenSubType::ULongLiteral},
+    };
+
+    const auto it = map.find(t_word);
+    if (it == map.end()) {
+        throw std::runtime_error("Unknown suffix inside literal.");
     }
 
-    return TokenSubType::Identifier;
+    if (dotPresent and it->second != TokenSubType::FloatLiteral) {
+        throw std::runtime_error("Expected float literal suffix.");
+    }
+
+    if (not dotPresent and it->second != TokenSubType::FloatLiteral) {
+        throw std::runtime_error("Expected float literal.");
+    }
+
+    return std::make_tuple(type, it->second);
 }
 
 TokenParser::TokenParser(): parserState{ParserState::Regular}, rowIndex{0} {}
 
 std::vector<Token> TokenParser::consumeLine(const TokenIdentifier& t_tokenIdent, std::string_view t_line) {
-    std::vector<std::tuple<int, int, std::string>> result;
+    std::vector<Token> result;
 
     for (int index = 0; index < t_line.length();) {
         if (parserState == ParserState::StringLiteral) {
@@ -262,46 +300,53 @@ std::vector<Token> TokenParser::consumeLine(const TokenIdentifier& t_tokenIdent,
             stringLiteral.append(token);
 
             if (parserState == ParserState::Regular) {
-                result.emplace_back(rowIndex, newIndex, stringLiteral);
+                result.emplace_back(TokenType::Literal, TokenSubType::StringLiteral, stringLiteral, rowIndex);
                 stringLiteral.clear();
             }
         }
         else {
-            if (CharIdentifier::isComment(t_line[index], t_line, index)) {
+            if (isComment(t_line[index], t_line, index)) {
                 index = skipComment(t_line, index);
-            } else if (CharIdentifier::isString(t_line[index])) {
+            } else if (isString(t_line[index])) {
                 parserState = ParserState::StringLiteral;
-            }else if (CharIdentifier::isChar(t_line[index])) {
+            }else if (isChar(t_line[index])) {
                 const auto [newIndex, token] = parseChar(t_line, index);
+                index = newIndex;
+
+                result.emplace_back(TokenType::Literal, TokenSubType::CharLiteral, token, rowIndex);
+            } else if (isLetter(t_line[index])) {
+                const auto [newIndex, token] = parseWord(t_line, index);
+                const auto [type, subType] = t_tokenIdent.identifyNumberLiteral(token);
 
                 index = newIndex;
-                result.emplace_back(rowIndex, newIndex, token);
-            } else if (CharIdentifier::isAlphabetic(t_line[index])) {
-                const auto [newIndex, token] = generateWord(t_line, index);
+
+                result.emplace_back(type, subType, token, rowIndex);
+            } else if (isDigit(t_line[index])) {
+                const auto [newIndex, token]= parseNumber(t_line, index);
+                const auto [type, subType] = t_tokenIdent.identifyNumberLiteral(token);
 
                 index = newIndex;
-                result.emplace_back(rowIndex, newIndex, token);
-            } else if (CharIdentifier::isDigit(t_line[index])) {
-                const auto [newIndex, token]= parseNumeric(t_line, index);
 
-                index = newIndex;
-                result.emplace_back(rowIndex, newIndex, token);
-            } else if (CharIdentifier::isOperator(t_line[index])) {
+                result.emplace_back(type, subType, token, rowIndex);
+            } else if (isOperator(t_line[index])) {
                 const auto [newIndex, token]= parseOperator(t_line, index);
+                const auto [type, subType] = t_tokenIdent.identifyNumberLiteral(token);
 
                 index = newIndex;
-                result.emplace_back(rowIndex, newIndex, token);
-            } else if (CharIdentifier::isBrace(t_line[index])) {
-                const auto [newIndex, token] = parseBraces(t_line, index);
 
-                index = newIndex;
+                result.emplace_back(type, subType, token, rowIndex);
+            } else if (isBrace(t_line[index])) {
+                const auto [token, subType] = parseBraces(t_line, index);
+
+                index++;
+
                 result.emplace_back(rowIndex, newIndex, token);
-            } else if (CharIdentifier::isSeparator(t_line[index])) {
+            } else if (isSeparator(t_line[index])) {
                 const auto [newIndex, token] = parseSeparator(t_line, index);
 
                 index = newIndex;
                 result.emplace_back(rowIndex, newIndex, token);
-            } else if (CharIdentifier::isWhiteSpace(t_line[index])) {
+            } else if (isWhiteSpace(t_line[index])) {
                 index = skipIndentation(t_line, index);
             } else {
                 throw std::runtime_error("Lexer::tokenize() error");
@@ -315,10 +360,10 @@ std::vector<Token> TokenParser::consumeLine(const TokenIdentifier& t_tokenIdent,
 }
 
 
-std::tuple<int, std::string_view> TokenParser::generateWord(std::string_view t_input, const int t_index) const {
+std::tuple<int, std::string_view> TokenParser::parseWord(std::string_view t_input, const int t_index) const {
     int index{t_index};
 
-    while (index < static_cast<int>(t_input.length()) && CharIdentifier::isWord(t_input[index])) {
+    while (index < static_cast<int>(t_input.length()) and isWord(t_input[index])) {
         ++index;
     }
 
@@ -326,10 +371,10 @@ std::tuple<int, std::string_view> TokenParser::generateWord(std::string_view t_i
     return std::make_tuple(index, token);
 }
 
-std::tuple<int, std::string_view> TokenParser::generateNumber(std::string_view t_input, const int t_index) const {
+std::tuple<int, std::string_view> TokenParser::parseNumber(const std::string_view t_input, const int t_index) const {
     int index{t_index};
 
-    while (index < static_cast<int>(t_input.length()) and (CharIdentifier::isDigit(t_input[index]) or t_input[index] == '_')) {
+    while (index < static_cast<int>(t_input.length()) and (isDigit(t_input[index]) or t_input[index] == '_')) {
         ++index;
     }
 
@@ -341,7 +386,7 @@ std::tuple<int, std::string_view> TokenParser::generateNumber(std::string_view t
     const int lastDigitIndex{index};
     index++;
 
-    while (index < static_cast<int>(t_input.length()) and (CharIdentifier::isDigit(t_input[index]) or t_input[index] == '_')) {
+    while (index < static_cast<int>(t_input.length()) and (isDigit(t_input[index]) or t_input[index] == '_')) {
         ++index;
     }
 
@@ -354,7 +399,7 @@ std::tuple<int, std::string_view> TokenParser::generateNumber(std::string_view t
     return std::make_tuple(index, token);
 }
 
-std::tuple<int, std::string> TokenParser::parseOperator(const std::string& t_input, const int t_index) const {
+std::tuple<int, std::string_view> TokenParser::parseOperator(const std::string_view t_input, const int t_index) const {
     int index{t_index + 1};
 
     if (index + 1 < static_cast<int>(t_input.length()) and t_input[index] == '=') {
@@ -366,16 +411,16 @@ std::tuple<int, std::string> TokenParser::parseOperator(const std::string& t_inp
 }
 
 
-std::tuple<int, std::string> TokenParser::parseBraces(const std::string& t_input, const int t_index) const {
+std::tuple<int, std::string_view> TokenParser::parseBraces(const std::string_view t_input, const int t_index) const {
     const auto strToken = std::string(1, t_input[t_index]);
     const auto newIndex = t_index + 1;
 
     return std::make_tuple(newIndex, strToken);
 }
 
-std::tuple<int, std::string> TokenParser::parseSeparator(const std::string& t_input, int t_index) const {
+std::tuple<int, std::string_view> TokenParser::parseSeparator(const std::string_view t_input, int t_index) const {
     int index{t_index};
-    while (index < static_cast<int>(t_input.length()) && CharIdentifier::isSeparator(t_input[index])) {
+    while (index < static_cast<int>(t_input.length()) and isSeparator(t_input[index])) {
         ++index;
     }
 
@@ -384,11 +429,7 @@ std::tuple<int, std::string> TokenParser::parseSeparator(const std::string& t_in
     return std::make_tuple(index, token);
 }
 
-int TokenParser::skipComment(const std::string& t_input, const int t_index) {
-    return static_cast<int>(t_input.size());
-}
-
-std::tuple<int, std::string> TokenParser::parseString(const std::string& t_input, const int t_index) {
+std::tuple<int, std::string_view> TokenParser::parseString(const std::string_view t_input, const int t_index) {
     int index = t_index + 1;
     char prevChar = 0;
 
@@ -412,36 +453,30 @@ std::tuple<int, std::string> TokenParser::parseString(const std::string& t_input
     return {index, t_input.substr(t_index, index - t_index)};
 }
 
-std::tuple<int, std::string> TokenParser::parseChar(const std::string& t_input, const int t_index) {
-    int index{t_index};
-    if (t_input[index] != '\'') {
-        throw std::invalid_argument("'");
-    }
-
-    index+=2;
-
-    if (t_input[index] != '\'') {
-        throw std::invalid_argument("'");
+std::tuple<int, std::string_view> TokenParser::parseChar(const std::string_view t_input, const int t_index) {
+    int index{t_index + 1};
+    if (t_input[index] == '\\') {
+        index++;
     }
 
     index++;
 
-    return {index, t_input.substr(t_index, 3)};
+    if (t_input[index] != '\'') {
+        throw std::runtime_error{"Invalid character `\\'"};
+    }
+
+    return {index, t_input.substr(t_index, index - t_index)};
 }
 
-int TokenParser::skipIndentation(const std::string& t_input, const int t_index) const {
+int TokenParser::skipIndentation(const std::string_view t_input, const int t_index) const {
     int index{t_index};
 
-    while (index < static_cast<int>(t_input.length()) && CharIdentifier::isWhiteSpace(t_input[index])) {
+    while (index < static_cast<int>(t_input.length()) and isWhiteSpace(t_input[index])) {
         ++index;
     }
 
     return index;
 }
-Token::Token(const TokenSubType t_type, const std::string t_lexeme, const int t_line)
-    : type{t_type}, lexeme{t_lexeme}, line{t_line} {}
-
-Lexer::Lexer(): tokens{}, tokenParser{}, tokenIdentifier{} {}
 
 void Lexer::tokenize(std::string_view t_line) {
 
