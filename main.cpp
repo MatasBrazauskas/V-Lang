@@ -14,7 +14,6 @@ int main() {
         lexer.tokenize(line);
     }
 
-
-    /*Parser parser{lexer.tokens};
-    const auto ast = parser.parse();*/
+    Parser parser{lexer.getTokens()};
+    const auto ast = parser.parse();
 }

@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-enum class TokenSubType;
+enum class TokenType;
 enum class TokenSubType;
 struct Token;
 
@@ -53,6 +53,13 @@ public:
 class BoolExpr {
 public:
     virtual ~BoolExpr() noexcept = default;
+};
+
+class BoolLiteral : public BoolExpr {
+public:
+    BoolLiteral() = delete;
+    explicit BoolLiteral(const bool t_isTrue): isTrue{t_isTrue} {}
+    bool isTrue;
 };
 
 class ComparisonExpr : public BoolExpr {
@@ -132,10 +139,11 @@ public:
 class VarAssignStmt : public Stmt {
 public:
     VarAssignStmt() = delete;
-    explicit VarAssignStmt(const std::string& t_name, std::unique_ptr<Expr> t_assignment)
-        : name{t_name}, assignment{std::move(t_assignment)} {}
+    explicit VarAssignStmt(const std::string& t_name, const std::string& t_op, std::unique_ptr<Expr> t_assignment)
+        : name{t_name}, op{t_op}, assignment{std::move(t_assignment)} {}
 
     std::string name;
+    std::string op;
     std::unique_ptr<Expr> assignment;
 };
 
@@ -175,23 +183,24 @@ public:
 class IfStmt : public Stmt {
 public:
     IfStmt() = delete;
-    explicit IfStmt(std::unique_ptr<VarInitStmt> t_init, std::unique_ptr<BoolExpr> t_cond, std::unique_ptr<BlockStmt> t_body)
+    explicit IfStmt(std::unique_ptr<Stmt> t_init, std::unique_ptr<BoolExpr> t_cond, std::unique_ptr<BlockStmt> t_body)
         : initializer{std::move(t_init)}, condition{std::move(t_cond)}, body{std::move(t_body)} {}
 
-    std::unique_ptr<VarInitStmt> initializer;
+    std::unique_ptr<Stmt> initializer;
     std::unique_ptr<BoolExpr> condition;
     std::unique_ptr<BlockStmt> body;
 };
 
 class CondStmt : public Stmt {
 public:
-    CondStmt() = delete;
-    explicit CondStmt(std::unique_ptr<IfStmt> ifs, std::vector<std::unique_ptr<IfStmt>> elses, std::unique_ptr<Stmt> blk)
-        : ifCond{std::move(ifs)}, elsesCond{std::move(elses)}, elseBody{std::move(blk)} {}
+    CondStmt() = default;
+    void addIfStmt(std::unique_ptr<IfStmt> t_ifStmt) { ifStmt = std::move(t_ifStmt); }
+    void addElifStmt(std::unique_ptr<IfStmt> t_ifStmt) { elifStmts.emplace_back(std::move(t_ifStmt)); }
+    void addElseBlock(std::unique_ptr<BlockStmt> t_blockStmt) { elseBody = std::move(t_blockStmt); }
 
-    std::unique_ptr<IfStmt> ifCond;
-    std::vector<std::unique_ptr<IfStmt>> elsesCond;
-    std::unique_ptr<Stmt> elseBody;
+    std::unique_ptr<IfStmt> ifStmt;
+    std::vector<std::unique_ptr<IfStmt>> elifStmts;
+    std::unique_ptr<BlockStmt> elseBody;
 };
 
 class ForStmt : public Stmt {
@@ -228,13 +237,13 @@ class Consumer {
 public:
     Consumer() = delete;
     explicit Consumer(const std::vector<Token>& t_tokens): tokens_{t_tokens}, index_{0} {}
-    [[nodiscard]] bool checkType(TokenSubType) const;
+    [[nodiscard]] bool checkType(TokenType) const;
     [[nodiscard]] bool checkSubType(TokenSubType) const;
 
-    [[nodiscard]] bool matchType(TokenSubType);
+    [[nodiscard]] bool matchType(TokenType);
     [[nodiscard]] bool matchSubType(TokenSubType);
 
-    const Token& consumeType(TokenSubType);
+    const Token& consumeType(TokenType);
     const Token& consumeSubType(TokenSubType);
 
     [[nodiscard]] bool isEnd() const;
@@ -260,5 +269,8 @@ private:
     std::unique_ptr<Stmt> parseVarDecl();
     std::unique_ptr<Stmt> parseVar();
     std::unique_ptr<Stmt> parseVarAssign();
-    std::unique_ptr<Stmt> parseForStmt();
+
+    std::unique_ptr<ForStmt> parseForStmt();
+    std::unique_ptr<IfStmt> parseIfStmt();
+    std::unique_ptr<CondStmt> parseCondition();
 };

@@ -4,7 +4,7 @@
 
 Parser::Parser(const std::vector<Token>& t_tokens): c{t_tokens} {}
 
-bool Consumer::checkType(const TokenSubType t_type) const {
+bool Consumer::checkType(const TokenType t_type) const {
     return tokens_[index_].type == t_type;
 }
 
@@ -12,7 +12,7 @@ bool Consumer::checkSubType(const TokenSubType t_subType) const {
     return tokens_[index_].subType == t_subType;
 }
 
-bool Consumer::matchType(const TokenSubType t_subType) {
+bool Consumer::matchType(const TokenType t_subType) {
     if (checkType(t_subType)) {
         index_++;
         return true;
@@ -28,11 +28,7 @@ bool Consumer::matchSubType(const TokenSubType t_subType) {
     return false;
 }
 
-bool Consumer::isEnd() const {
-    return index_ == tokens_.size();
-}
-
-const Token& Consumer::consumeType(const TokenSubType t_type) {
+const Token& Consumer::consumeType(const TokenType t_type) {
     if (checkType(t_type)) {
         return tokens_[index_++];
     }
@@ -47,11 +43,14 @@ const Token& Consumer::consumeSubType(const TokenSubType t_subType) {
 
     throw std::runtime_error("Error with consume function");
 }
+bool Consumer::isEnd() const {
+    return index_ == tokens_.size();
+}
 
 Program Parser::parse() {
     Program program;
 
-    while (c.isEnd()) {
+    while (not c.isEnd()) {
         program.functions.push_back(parseFunction());
     }
 
@@ -61,7 +60,7 @@ Program Parser::parse() {
 FnDeclStmt Parser::parseFunction() {
     c.consumeSubType(TokenSubType::Func);
 
-    const auto fnName = c.consumeType(TokenSubType::Identifier).lexeme;
+    const auto fnName = c.consumeSubType(TokenSubType::Identifier).lexeme;
 
     c.consumeSubType(TokenSubType::LParen);
 
@@ -75,7 +74,7 @@ FnDeclStmt Parser::parseFunction() {
     }
 
     c.consumeSubType(TokenSubType::RParen);
-    const auto returnType= c.consumeType(TokenSubType::Type).lexeme;
+    const auto returnType= c.consumeType(TokenType::Type).lexeme;
 
     std::unique_ptr<Stmt> body = parseBlock();
 
@@ -95,12 +94,15 @@ std::unique_ptr<BlockStmt> Parser::parseBlock() {
 }
 
 std::unique_ptr<Stmt> Parser::parseStatement() {
+    if (c.checkType(TokenType::Type) or c.checkSubType(TokenSubType::Const)) {
+        return parseVar();
+    }
     if (c.matchSubType(TokenSubType::Return)) {
         return std::make_unique<ReturnStmt>(parseExpr());
     }
 
     if (c.checkSubType(TokenSubType::If)) {
-
+        return parseCondition();
     }
 
     if (c.checkSubType(TokenSubType::For)) {
@@ -111,16 +113,24 @@ std::unique_ptr<Stmt> Parser::parseStatement() {
 }
 
 std::unique_ptr<Expr> Parser::parseExpr() {
-    if (c.checkType(TokenSubType::Literal)) {
-        const auto literalToken = c.consumeType(TokenSubType::Literal);
-        std::unique_ptr<Expr> leftExpr = std::make_unique<LiteralExpr>(literalToken.lexeme, "");
+    if (c.checkType(TokenType::Literal)) {
+        const auto literalToken = c.consumeType(TokenType::Literal);
+        return std::make_unique<LiteralExpr>(literalToken.lexeme, literalToken.lexeme);
     }
 
     throw std::runtime_error("Bad expression type");
 }
 
 std::unique_ptr<BoolExpr> Parser::parseBoolExpression() {
-    return nullptr;
+    if (c.matchSubType(TokenSubType::True)) {
+        return std::make_unique<BoolLiteral>(true);
+    }
+
+    if (c.matchSubType(TokenSubType::False)) {
+        return std::make_unique<BoolLiteral>(false);
+    }
+
+    throw std::runtime_error("Bad expression type");
 }
 
 std::unique_ptr<Stmt> Parser::parseVarTypeStmt() {
@@ -130,7 +140,7 @@ std::unique_ptr<Stmt> Parser::parseVarTypeStmt() {
         isConst = true;
     }
 
-    const auto typeName = c.consumeType(TokenSubType::Type).lexeme;
+    const auto typeName = c.consumeType(TokenType::Type).lexeme;
 
     auto declType = DeclType::Value;
     std::unique_ptr<Expr> arraySizeExpr = {};
@@ -150,7 +160,7 @@ std::unique_ptr<Stmt> Parser::parseVarTypeStmt() {
 
 std::unique_ptr<Stmt> Parser::parseVarDecl() {
     std::unique_ptr<Stmt> varTypeDecl = parseVarTypeStmt();
-    const auto identifierName = c.consumeType(TokenSubType::Identifier).lexeme;
+    const auto identifierName = c.consumeSubType(TokenSubType::Identifier).lexeme;
 
     return std::make_unique<VarDeclStmt>(std::move(varTypeDecl), identifierName);
 }
@@ -158,7 +168,7 @@ std::unique_ptr<Stmt> Parser::parseVarDecl() {
 std::unique_ptr<Stmt> Parser::parseVar() {
     std::unique_ptr<Stmt> varDecl = parseVarDecl();
 
-    if (c.matchSubType(TokenSubType::Assign)) {
+    if (c.matchType(TokenType::AssignOp)) {
         std::unique_ptr<Expr> expr = parseExpr();
         return std::make_unique<VarInitStmt>(std::move(varDecl), std::move(expr));
     }
@@ -167,33 +177,25 @@ std::unique_ptr<Stmt> Parser::parseVar() {
 }
 
 std::unique_ptr<Stmt> Parser::parseVarAssign() {
-    return nullptr;
+    const auto identifierToken = c.consumeSubType(TokenSubType::Identifier);
+    const auto assignToken = c.consumeType(TokenType::AssignOp);
+
+    std::unique_ptr<Expr> expr = parseExpr();
+    return std::make_unique<VarAssignStmt>(identifierToken.lexeme, assignToken.lexeme, std::move(expr));
 }
 
-std::unique_ptr<Stmt> Parser::parseForStmt() {
+std::unique_ptr<ForStmt> Parser::parseForStmt() {
     c.consumeSubType(TokenSubType::For);
     c.consumeSubType(TokenSubType::LParen);
 
-    std::unique_ptr<Stmt> varDecl = parseVarDecl();
+    std::unique_ptr<Stmt> varDecl;
 
-    if (c.matchSubType(TokenSubType::Colon)) {
-        std::unique_ptr<Expr> startExpr = parseExpr();
-        c.consumeSubType(TokenSubType::Range);
-
-        std::unique_ptr<Expr> endExpr = parseExpr();
-        c.consumeSubType(TokenSubType::RParen);
-
-        std::unique_ptr<Stmt> block = parseBlock();
-
-        return std::make_unique<ForRangeStmt>(std::move(varDecl), std::move(startExpr), std::move(endExpr), std::move(block));
-    }
-
-    if (c.checkSubType(TokenSubType::Assign)) {
-        std::unique_ptr<Expr> expr = parseExpr();
-        varDecl = std::make_unique<VarInitStmt>(std::move(varDecl), std::move(expr));
+    if (not c.checkSubType(TokenSubType::Semicolon)) {
+        varDecl = parseVar();
     }
 
     c.consumeSubType(TokenSubType::Semicolon);
+
     std::unique_ptr<BoolExpr> condition;
 
     if (not c.checkSubType(TokenSubType::Semicolon)) {
@@ -201,6 +203,7 @@ std::unique_ptr<Stmt> Parser::parseForStmt() {
     }
 
     c.consumeSubType(TokenSubType::Semicolon);
+
     std::unique_ptr<Stmt> incrementStmt;
 
     if (not c.checkSubType(TokenSubType::RParen)) {
@@ -211,4 +214,45 @@ std::unique_ptr<Stmt> Parser::parseForStmt() {
 
     auto block = parseBlock();
     return std::make_unique<ForStmt>(std::move(varDecl), std::move(condition), std::move(incrementStmt), std::move(block));
+}
+
+std::unique_ptr<IfStmt> Parser::parseIfStmt() {
+    if (c.checkSubType(TokenSubType::If)) {
+        c.consumeSubType(TokenSubType::If);
+    } else if (c.checkSubType(TokenSubType::Elif)) {
+        c.consumeSubType(TokenSubType::Elif);
+    }
+
+    c.consumeSubType(TokenSubType::LParen);
+
+    std::unique_ptr<Stmt> initializer;
+
+    if (c.checkType(TokenType::Type) || c.checkSubType(TokenSubType::Const)) {
+        initializer = parseVar();
+        c.consumeSubType(TokenSubType::Semicolon);
+    }
+
+    std::unique_ptr<BoolExpr> condition = parseBoolExpression();
+    c.consumeSubType(TokenSubType::RParen);
+    std::unique_ptr<BlockStmt> block = parseBlock();
+
+    return std::make_unique<IfStmt>(std::move(initializer), std::move(condition), std::move(block));
+}
+
+std::unique_ptr<CondStmt> Parser::parseCondition() {
+    auto condition = std::make_unique<CondStmt>();
+
+    auto ifStmt = parseIfStmt();
+    condition->addIfStmt(std::move(ifStmt));
+
+    while (c.checkSubType(TokenSubType::Elif)) {
+        auto elifStmt = parseIfStmt();
+        condition->addElifStmt(std::move(elifStmt));
+    }
+
+    c.consumeSubType(TokenSubType::Else);
+    std::unique_ptr<BlockStmt> block = parseBlock();
+    condition->addElseBlock(std::move(block));
+
+    return condition;
 }
